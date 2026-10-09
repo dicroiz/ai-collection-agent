@@ -1,0 +1,60 @@
+generator client {
+    provider = "prisma-client-js"
+    binaryTargets = ["native", "linux-musl-arm64-openssl-3.0.x"]
+    output = "/home/ubuntu/ai_collection_agent/nextjs_space/node_modules/.prisma/client"
+}
+
+datasource db {
+    provider = "postgresql"
+    url      = env("DATABASE_URL")
+}
+
+model Debtor {
+  id          String   @id @default(cuid())
+  name        String
+  phoneNumber String   @map("phone_number")
+  debtAmount  Float    @map("debt_amount")
+  dueDate     DateTime @map("due_date")
+  status      String   @default("new") // new, contacted, in_negotiation, resolved
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  interactions  Interaction[]
+  conversations Conversation[]
+
+  @@index([phoneNumber])
+  @@index([status])
+  @@map("debtors")
+}
+
+model Interaction {
+  id         String   @id @default(cuid())
+  debtorId   String   @map("debtor_id")
+  channel    String   // whatsapp, voice
+  direction  String   // inbound, outbound
+  content    String?  @db.Text
+  transcript String?  @db.Text
+  outcome    String?  // sent, delivered, replied, completed, failed, no_answer
+  vapiCallId String?  @map("vapi_call_id")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  debtor Debtor @relation(fields: [debtorId], references: [id], onDelete: Cascade)
+
+  @@index([debtorId])
+  @@index([channel])
+  @@index([createdAt])
+  @@map("interactions")
+}
+
+model Conversation {
+  id        String   @id @default(cuid())
+  debtorId  String   @map("debtor_id")
+  messages  Json     @default("[]") // Array of {role, content, timestamp}
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  debtor Debtor @relation(fields: [debtorId], references: [id], onDelete: Cascade)
+
+  @@index([debtorId])
+  @@map("conversations")
+}

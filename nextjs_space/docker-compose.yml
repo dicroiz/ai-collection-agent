@@ -1,0 +1,23 @@
+# Local development PostgreSQL
+# Run: docker-compose up -d
+# Then set DATABASE_URL in .env.local:
+#   DATABASE_URL="postgresql://collector:collector123@localhost:5432/collection_agent"
+
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: collection_agent_db
+    environment:
+      POSTGRES_USER: collector
+      POSTGRES_PASSWORD: collector123
+      POSTGRES_DB: collection_agent
+    ports:
+      - '5432:5432'
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    restart: unless-stopped
+
+volumes:
+  pgdata:
